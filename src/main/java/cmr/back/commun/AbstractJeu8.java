@@ -40,7 +40,7 @@ public abstract class AbstractJeu8 implements IJeu {
     );
 
     /* liste des combinaisons positions gagnantes */
-    List<String> listWin = Arrays.asList("012","345","678","036","147","257","048","246");
+    List<String> listWin = Arrays.asList("012","345","678","036","147","258","048","246");
 
     /* matrice bidimensionnel représentant l'état du jeu */
     protected Map<String, String> matPaws;

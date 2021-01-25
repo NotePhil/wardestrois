@@ -71,15 +71,18 @@ public abstract class AbstractJeuDecorateur extends AbstractJeu8 {
        String position = null;
         //on cherche toutes les positions de l'IA
         Predicate<Map.Entry<String, String>> pred = m -> m.getValue().equalsIgnoreCase(confJoueurs.get(this.getAbstractJeu8().getIdIA().toString()));
-        String sum = this.getAbstractJeu8().matPaws.entrySet().stream().filter(pred).map(x -> x.getKey()).sorted(String::compareTo).collect(Collectors.joining());
-        logs.info("[canIWinNextStep] positions IA trouvées {}",sum);
+        Object[] sumObj = this.getAbstractJeu8().matPaws.entrySet().stream().filter(pred).map(x -> x.getKey()).sorted(String::compareTo).toArray();
+        logs.info("[canIWinNextStep] positions IA trouvées");
+        Arrays.stream(sumObj).forEach(s -> logs.info(s.toString()));
        //si c'est le 3eme pion de l'ia à positionner
         //on recherche dans la liste des posibilités gagnates celle qui se rapproche de la notre et on extrait la position à completer
-        if(sum.length() == 2){
-            String pos = listWin.stream().filter(x->x.contains(sum)).map(y-> y.split(sum)).map(z->
-                    Arrays.stream(z).filter(a -> !a.contains(sum)).collect(Collectors.joining())).collect(Collectors.joining());
-
-            position = pos;
+        if(sumObj.length == 2){
+           String pos = listWin.stream().map(x -> {
+               String item = x.replaceFirst(sumObj[0].toString(), "");
+               item = item.replaceFirst(sumObj[1].toString(), "");
+               return item;
+           }).filter(a -> a.length()==1).distinct().collect(Collectors.joining());
+           position = pos;
         }
         logs.info("[canIWinNextStep] position retournée {}",position);
         return position;
