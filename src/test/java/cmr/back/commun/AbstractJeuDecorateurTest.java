@@ -36,7 +36,7 @@ public class AbstractJeuDecorateurTest {
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("1",jeuSolo.confJoueurs.get("2"));
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("4",jeuSolo.confJoueurs.get("2"));
         //la position 8 est attendu
-        String position = jeuSolo.canIWinNextStep();
+        String position = jeuSolo.canIWinNextStep("1");
         Assert.assertEquals(position,"8");
     }
 
@@ -51,7 +51,7 @@ public class AbstractJeuDecorateurTest {
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("1",jeuSolo.confJoueurs.get("2"));
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("4",jeuSolo.confJoueurs.get("2"));
         //la position 2 est attendu
-        String position = jeuSolo.canIWinNextStep();
+        String position = jeuSolo.canIWinNextStep("1");
         Assert.assertEquals(position,"2");
     }
 
@@ -66,7 +66,7 @@ public class AbstractJeuDecorateurTest {
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("1",jeuSolo.confJoueurs.get("2"));
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("4",jeuSolo.confJoueurs.get("2"));
         //Aucune position gagnante
-        String position = jeuSolo.canIWinNextStep();
+        String position = jeuSolo.canIWinNextStep("1");
         Assert.assertTrue(position.isBlank());
     }
 
@@ -81,7 +81,75 @@ public class AbstractJeuDecorateurTest {
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("3",jeuSolo.confJoueurs.get("2"));
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("5",jeuSolo.confJoueurs.get("2"));
         //la position 4 est attendu
-        String position = jeuSolo.canIWinNextStep();
+        String position = jeuSolo.canIWinNextStep("1");
         Assert.assertEquals(position,"4");
     }
+
+    @Test
+    public void testcanIWinNextStep2ButBusy(){
+        //la position renvoyé comme gagnante est occupée. donc on renvoie vide finalement
+        //mettre le joueur 1 en position de gagnant au prochain tour.
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("8",jeuSolo.confJoueurs.get("1"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("5",jeuSolo.confJoueurs.get("1"));
+
+        //joueur 2 perdant
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("0",jeuSolo.confJoueurs.get("2"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("4",jeuSolo.confJoueurs.get("2"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("2",jeuSolo.confJoueurs.get("2"));
+        //la position 2 est attendu
+        String position = jeuSolo.canIWinNextStep("1");
+        Assert.assertTrue(position.isBlank());
+    }
+
+    @Test
+    public void testcanIWinNextStepWith3PawnPos0(){
+        //mettre le joueur 1 perdant
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("2",jeuSolo.confJoueurs.get("1"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("4",jeuSolo.confJoueurs.get("1"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("5",jeuSolo.confJoueurs.get("1"));
+
+        //joueur 2  en position de gagnant au prochain tour.
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("3",jeuSolo.confJoueurs.get("2"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("6",jeuSolo.confJoueurs.get("2"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("1",jeuSolo.confJoueurs.get("2"));
+        //la position 0 est attendu
+        String position = jeuSolo.canIWinNextStep("2");
+        Assert.assertEquals(position,"0");
+    }
+
+    @Test
+    public void testcanIWinNextStepWith3PawnNoPos0Busy(){
+        //mettre le joueur 1 perdant
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("0",jeuSolo.confJoueurs.get("1"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("4",jeuSolo.confJoueurs.get("1"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("5",jeuSolo.confJoueurs.get("1"));
+
+        //joueur 2  en position de gagnant au prochain tour.
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("3",jeuSolo.confJoueurs.get("2"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("6",jeuSolo.confJoueurs.get("2"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("1",jeuSolo.confJoueurs.get("2"));
+        //la position 0 est attendu mais la position occupé dc pas gagnant
+        String position = jeuSolo.canIWinNextStep("2");
+        Assert.assertTrue(position.isBlank());
+    }
+
+    @Test
+    public void testcanIWinNextStepWith3PawnNoPos(){
+        //mettre le joueur 1
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("0",jeuSolo.confJoueurs.get("1"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("1",jeuSolo.confJoueurs.get("1"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("8",jeuSolo.confJoueurs.get("1"));
+
+        //joueur 2
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("3",jeuSolo.confJoueurs.get("2"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("6",jeuSolo.confJoueurs.get("2"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("2",jeuSolo.confJoueurs.get("2"));
+        //AUCUNE position est attenduE
+        String position = jeuSolo.canIWinNextStep("2");
+        Assert.assertTrue(position.isBlank());
+
+        position = jeuSolo.canIWinNextStep("1");
+        Assert.assertTrue(position.isBlank());
+    }
+
 }

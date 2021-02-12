@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -67,22 +68,58 @@ public abstract class AbstractJeuDecorateur extends AbstractJeu8 {
         return reponseMove;
     }
 
-    protected String canIWinNextStep(){
+    //confJoueurs.get(this.getAbstractJeu8().getIdIA().toString())
+
+    /**
+     * méthode permettant de determiner si au prochain coup l'idPlayer gagnera
+     * @param idPlayer
+     * @return
+     */
+    protected String canIWinNextStep(String idPlayer){
        String position = null;
         //on cherche toutes les positions de l'IA
-        Predicate<Map.Entry<String, String>> pred = m -> m.getValue().equalsIgnoreCase(confJoueurs.get(this.getAbstractJeu8().getIdIA().toString()));
+        Predicate<Map.Entry<String, String>> pred = m -> m.getValue().equalsIgnoreCase(confJoueurs.get(idPlayer));
         Object[] sumObj = this.getAbstractJeu8().matPaws.entrySet().stream().filter(pred).map(x -> x.getKey()).sorted(String::compareTo).toArray();
         logs.info("[canIWinNextStep] positions IA trouvées");
         Arrays.stream(sumObj).forEach(s -> logs.info(s.toString()));
-       //si c'est le 3eme pion de l'ia à positionner
+       //si c'est le 3eme pion  à positionner
         //on recherche dans la liste des posibilités gagnates celle qui se rapproche de la notre et on extrait la position à completer
         if(sumObj.length == 2){
+           //pour chaque combinaison gagnante, on extrait l'éventuelle position gagnante en supprimant les positions occupées
            String pos = listWin.stream().map(x -> {
                String item = x.replaceFirst(sumObj[0].toString(), "");
                item = item.replaceFirst(sumObj[1].toString(), "");
+
                return item;
-           }).filter(a -> a.length()==1).distinct().collect(Collectors.joining());
+           }).filter(a -> a.length()==1 && this.abstractJeu8.isFree(a)).findFirst().orElse("");
            position = pos;
+        }
+        else  if(sumObj.length == 3) {
+            String pos = listWin.stream().map(x -> {
+                String[] obj = x.split("");
+                String resultat = new String();
+                int diff=0;
+                int iso=0;
+                //on parcoure les deux chaines en parallèle
+                //recherche des positions différentes entre les combinaisons gagnantes et les positions occupées par le joueur
+                for (int i = 0; i < obj.length; i++) {
+                    if(!obj[i].equalsIgnoreCase(sumObj[i].toString())){
+                        if(this.abstractJeu8.isFree(obj[i])  && this.abstractJeu8.isLegalMove(obj[i], sumObj[i].toString())){
+                            resultat= obj[i];
+                            diff++;
+                        }
+                    }
+                    else {
+                        iso++;
+                    }
+                }
+                //on ne doit avoir qu'une position différente et deux identiques.
+                if(diff==1 && iso==2){
+                    return resultat;
+                }
+                return "";
+            }).filter(a -> !a.isBlank()).findFirst().orElse("");
+            position = pos;
         }
         logs.info("[canIWinNextStep] position retournée {}",position);
         return position;
