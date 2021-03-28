@@ -1,11 +1,10 @@
 package cmr.back.commun;
 
 import cmr.back.commun.dto.ReponseMove;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -13,6 +12,8 @@ import java.util.stream.Collectors;
 import static java.util.Map.entry;
 
 public abstract class AbstractJeu8 implements IJeu {
+
+    Logger logger = LoggerFactory.getLogger(AbstractJeu8.class);
 
     public static int TOTAL_PAWN = 6;
 
@@ -58,8 +59,8 @@ public abstract class AbstractJeu8 implements IJeu {
         return act == Integer.parseInt(tab[0].toString()) ? Integer.parseInt(tab[1].toString()) : Integer.parseInt(tab[0].toString()); };
 
     /* précise sur une cellule de la matrice est libre */
-    public boolean isFree(String pos){
-        return  (matPaws.get(pos) == null || matPaws.get(pos).isBlank())  ?  true : false;
+    public boolean isFree(String pos,Map<String, String> matrice){
+        return  (matrice.get(pos) == null || matrice.get(pos).isBlank())  ?  true : false;
     }
 
 
@@ -70,15 +71,15 @@ public abstract class AbstractJeu8 implements IJeu {
      * 1- filtre et retient uniquement les positions d'un joueur. les concatènent dans une chaine
      * 2- regarde si dans une liste de positions gagnantes on retrouve la chaine
      */
-    private String calculIsTerminated(){
+    private String calculIsTerminated(Map<String, String> matrice){
         Predicate<Map.Entry<String, String>> pred1 = m -> m.getValue().equalsIgnoreCase(confJoueurs.get("1"));
         Predicate<Map.Entry<String, String>> pred2 = m -> m.getValue().equalsIgnoreCase(confJoueurs.get("2"));
-        String sum = this.matPaws.entrySet().stream().filter(pred1).map(x -> x.getKey()).sorted(String::compareTo).collect(Collectors.joining());
+        String sum = matrice.entrySet().stream().filter(pred1).map(x -> x.getKey()).sorted(String::compareTo).collect(Collectors.joining());
         if(listWin.contains(sum)){
             return confJoueurs.get("1");
         }
 
-        sum = this.matPaws.entrySet().stream().filter(pred2).map(x -> x.getKey()).sorted(String::compareTo).collect(Collectors.joining());
+        sum = matrice.entrySet().stream().filter(pred2).map(x -> x.getKey()).sorted(String::compareTo).collect(Collectors.joining());
         if(listWin.contains(sum)){
             return confJoueurs.get("2");
         }
@@ -87,11 +88,11 @@ public abstract class AbstractJeu8 implements IJeu {
     }
 
     /* renvoie l'identifiant du jour qui a gagné */
-    protected String isTerminated(){
-        String i = calculIsTerminated();
-        if(i == confJoueurs.get("1"))
+    protected String isTerminated(Map<String, String> matrice){
+        String i = calculIsTerminated(matrice);
+        if(i.equalsIgnoreCase(confJoueurs.get("1")))
             return "1";
-        else if (i == confJoueurs.get("2"))
+        else if (i.equalsIgnoreCase(confJoueurs.get("2")))
             return "2";
         else
             return i;
@@ -99,16 +100,16 @@ public abstract class AbstractJeu8 implements IJeu {
 
     /* indique si un déplacement est autorisé */
     protected boolean isLegalMove(String newPos, String oldPos){
-        if(oldPos == newPos){
+        if(oldPos.equalsIgnoreCase(newPos)){
             return false;
         }
 
         /*si on part / va du centre tout est possibe*/
-        if (oldPos == "4" || newPos == "4") {
+        if (oldPos.equalsIgnoreCase("4") || newPos.equalsIgnoreCase("4")) {
             return true;
         } else {
             /*pour etre compatible a tous les implementations js on utilise pas indexof*/
-            if (availableMoveTab.get(newPos)[0] == oldPos || availableMoveTab.get(newPos)[1] == oldPos) {
+            if (availableMoveTab.get(newPos)[0].equalsIgnoreCase(oldPos) || availableMoveTab.get(newPos)[1].equalsIgnoreCase(oldPos)) {
                 return true;
             } else {
                 return false;
@@ -125,7 +126,7 @@ public abstract class AbstractJeu8 implements IJeu {
      */
     public ReponseMove placePawn(String pos, Integer player){
         ReponseMove reponseMove = new ReponseMove();
-        if(getNbePawn()< AbstractJeu8.TOTAL_PAWN && this.isFree(pos)){
+        if(getNbePawn()< AbstractJeu8.TOTAL_PAWN && this.isFree(pos, this.matPaws)){
             this.matPaws.put(pos, confJoueurs.get(player));
         }
         else{
@@ -158,7 +159,7 @@ public abstract class AbstractJeu8 implements IJeu {
      */
     public ReponseMove movePawn(String newPos, String oldPos, Integer player){
         ReponseMove reponseMove = new ReponseMove();
-        if(this.isFree(newPos) && this.isLegalMove(newPos, oldPos) && (player == this.actifPlayer)){
+        if(this.isFree(newPos, this.matPaws) && this.isLegalMove(newPos, oldPos) && (player == this.actifPlayer)){
             this.matPaws.put(newPos,confJoueurs.get(player));
             this.matPaws.put(oldPos,"");
             this.actifPlayer =  Integer.valueOf(whoIsNext.apply(actifPlayer).toString());
@@ -201,7 +202,7 @@ public abstract class AbstractJeu8 implements IJeu {
         Random random = new Random();
         int pos = random.nextInt(10);
         int i = 0; //eviter de boucler à l'infini
-        while(!this.isFree(String.valueOf(pos))){
+        while(!this.isFree(String.valueOf(pos),this.matPaws)){
             //TODO trouver un classe qui génére un entier et se souvient des précédents tirages
             pos = random.nextInt(10);
             if(++i >= 50) break;
@@ -210,6 +211,71 @@ public abstract class AbstractJeu8 implements IJeu {
             reponse = String.valueOf(i);
 
         return reponse;
+    }
+
+    /**
+     * positionne un pion en vérifiant si les règles le permettent
+     * @param actifPlayer joueur actif
+     * @param newPosition position souhaitée
+     * @return ReponseMove
+     */
+    public ReponseMove positionnerPion(Integer actifPlayer, String newPosition) {
+        logger.info("[AbstractJeu8] positionnerPion actifPlayer={}, newPosition={}",actifPlayer,newPosition);
+        ReponseMove reponseMove = new ReponseMove();
+        if(this.isValidPosition(newPosition) && this.getNbePawn()< AbstractJeu8.TOTAL_PAWN && this.getActifPlayer() == actifPlayer){
+            reponseMove = this.placePawn(newPosition,actifPlayer);
+        }
+        else {
+            reponseMove.setOkToMove(false);
+        }
+        logger.info("[AbstractJeu8] positionnerPion reponse {}", reponseMove);
+        return reponseMove;
+    }
+
+    /**
+     * Déplacement un pion en vérifiant si les règles le permettent
+     * @param actifPlayer joueur actif
+     * @param newPosition position souhaitée
+     * @param oldPosition ancienne position
+     * @return ReponseMove
+     */
+    public ReponseMove deplacerPion( Integer actifPlayer, String newPosition, String oldPosition){
+        logger.info("[AbstractJeu8] deplacerPion actifPlayer={}, newPosition={}, oldPosition={}",actifPlayer,newPosition,oldPosition);
+        ReponseMove reponseMove = new ReponseMove();
+        if(this.isValidPosition(newPosition) &&  this.isValidPosition(oldPosition) && this.getActifPlayer() == actifPlayer){
+            reponseMove = this.movePawn(newPosition,oldPosition,actifPlayer);
+        }
+        else {
+            reponseMove.setOkToMove(false);
+        }
+        logger.info("[AbstractJeu8] deplacerPion reponse {}", reponseMove);
+        return reponseMove;
+    }
+
+    private boolean isValidPosition(String position){
+        try {
+            Integer i = Integer.valueOf(position);
+            if(0 < i || i > 8){
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        catch (Exception e){
+            logger.debug("exception isValidPosition", e.getCause());
+            return false;
+        }
+    }
+
+    public List<String> listFreePosition(){
+        List<String> posFree = new ArrayList<>();
+        for (int i=0; i<=8;i++){
+            if(this.isFree(String.valueOf(i),this.matPaws)){
+                posFree.add(String.valueOf(i));
+            }
+        }
+        return posFree;
     }
 
     public Integer getNbePawn() {

@@ -134,7 +134,7 @@ public class AbstractJeuDecorateurTest {
     }
 
     @Test
-    public void testcanIWinNextStepWith3PawnNoPos(){
+    public void testcanIWinNextStepWith3PawnPos4(){
         //mettre le joueur 1
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("0",jeuSolo.confJoueurs.get("1"));
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("1",jeuSolo.confJoueurs.get("1"));
@@ -144,12 +144,35 @@ public class AbstractJeuDecorateurTest {
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("3",jeuSolo.confJoueurs.get("2"));
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("6",jeuSolo.confJoueurs.get("2"));
         jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("2",jeuSolo.confJoueurs.get("2"));
-        //AUCUNE position est attenduE
+        //position 4 gagnante
         String position = jeuSolo.canIWinNextStep("2");
-        Assert.assertTrue(position.isBlank());
-
+        Assert.assertEquals(position,"4");
+        //position 4 gagnante
         position = jeuSolo.canIWinNextStep("1");
-        Assert.assertTrue(position.isBlank());
+        Assert.assertEquals(position,"4");
     }
 
+    @Test
+    public void testcanIWinNextStepWith3PawnPos7With2Possibilities(){
+        //mettre le joueur 1
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("4",jeuSolo.confJoueurs.get("1"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("1",jeuSolo.confJoueurs.get("1"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("8",jeuSolo.confJoueurs.get("1"));
+
+        //joueur 2
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("3",jeuSolo.confJoueurs.get("2"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("6",jeuSolo.confJoueurs.get("2"));
+        jeuSolo.getAbstractJeu8().matPaws.putIfAbsent("2",jeuSolo.confJoueurs.get("2"));
+        //position 4 gagnante
+        String position = jeuSolo.canIWinNextStep("2");
+        Assert.assertTrue(position.isBlank());
+        //position 4 gagnante
+        position = jeuSolo.canIWinNextStep("1");
+        Assert.assertEquals(position,"7");
+    }
+
+    @Test
+    public void testPostionnerPion(){
+
+    }
 }
